@@ -16,6 +16,8 @@ jobs:
       run: |
         git reset --hard
         git clean -fdx
+        git status
+        ls -al
 
     - name: Debug Git Configuration
       run: |
@@ -25,9 +27,15 @@ jobs:
         git config --list
         echo "## Git Status"
         git status
+        echo "## Current Directory"
+        pwd
+        echo "## List Files"
+        ls -al
 
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for all branches and tags
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
@@ -39,6 +47,15 @@ jobs:
 
     - name: Build project
       run: npm run build
+
+    - name: Debug SSH Connection
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      run: |
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - || exit 1
+        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "echo 'SSH connection successful'" || exit 1
 
     - name: Deploy to Server
       env:
