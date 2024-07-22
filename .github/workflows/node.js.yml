@@ -16,6 +16,11 @@ jobs:
         node-version: [16.x, 18.x, 20.x]
 
     steps:
+    - name: Clean workspace
+      run: |
+        git reset --hard
+        git clean -fdx
+
     - name: Checkout repository
       uses: actions/checkout@v3
 
