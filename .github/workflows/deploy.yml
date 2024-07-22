@@ -1,34 +1,52 @@
-name: Deploy to GitHub Pages
+name: Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  deploy:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Clean workspace
+      run: |
+        git reset --hard
+        git clean -fdx
 
-      - name: Clear npm cache
-        run: npm cache clean --force
+    - name: Debug Git Configuration
+      run: |
+        echo "## Git Version"
+        git --version
+        echo "## Git Config"
+        git config --list
+        echo "## Git Status"
+        git status
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: npm install
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
 
-      - name: Build the project
-        run: npm run build
+    - name: Install dependencies
+      run: npm install
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+    - name: Build project
+      run: npm run build
+
+    - name: Deploy to Server
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      run: |
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "mkdir -p ~/myapp"
+        scp -r build/* $SERVER_USER@$SERVER_HOST:~/myapp
+        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "pm2 restart myapp || pm2 start build/index.js --name myapp"
