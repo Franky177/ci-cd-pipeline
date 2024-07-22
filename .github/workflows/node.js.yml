@@ -21,6 +21,15 @@ jobs:
         git reset --hard
         git clean -fdx
 
+    - name: Debug Git Configuration
+      run: |
+        echo "## Git Version"
+        git --version
+        echo "## Git Config"
+        git config --list
+        echo "## Git Status"
+        git status
+
     - name: Checkout repository
       uses: actions/checkout@v3
 
