@@ -20,6 +20,8 @@ jobs:
       run: |
         git reset --hard
         git clean -fdx
+        git status
+        ls -al
 
     - name: Debug Git Configuration
       run: |
@@ -29,9 +31,15 @@ jobs:
         git config --list
         echo "## Git Status"
         git status
+        echo "## Current Directory"
+        pwd
+        echo "## List Files"
+        ls -al
 
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for all branches and tags
 
     - name: Set up Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
